@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
+
 def test_valid_trade_execution():
     payload = {
         "features": {
@@ -16,7 +17,10 @@ def test_valid_trade_execution():
             "z_score": -2.9,
             "volume": 0.05,
             "imbalance": 0.4,
-            "volatility": 0.0001
+            "volatility": 0.0001,
+            "btc_price": 30000.0,
+            "eth_price": 2100.0,
+            "eth_btc": 0.07
         }
     }
 
@@ -47,7 +51,10 @@ def test_unsupported_decision(monkeypatch):
             "z_score": 2.5,
             "volume": 0.01,
             "imbalance": 0.5,
-            "volatility": 0.0002
+            "volatility": 0.0002,
+            "btc_price": 31000.0,
+            "eth_price": 2150.0,
+            "eth_btc": 0.069
         }
     }
 
@@ -63,7 +70,10 @@ def test_zero_volume():
             "z_score": -3.0,
             "volume": 0.0,
             "imbalance": 0.6,
-            "volatility": 0.0003
+            "volatility": 0.0003,
+            "btc_price": 29000.0,
+            "eth_price": 2000.0,
+            "eth_btc": 0.069
         }
     }
 
