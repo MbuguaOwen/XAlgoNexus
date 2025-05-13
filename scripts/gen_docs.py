@@ -33,34 +33,25 @@ PROMETHEUS_METRICS = [
 ]
 
 def generate_readme():
+    os.makedirs(os.path.dirname(README_OUTPUT), exist_ok=True)
+
     with open(README_OUTPUT, "w") as f:
-        f.write("# 📊 XAlgoNexus Auto-Generated README
+        f.write("# 📊 XAlgoNexus Auto-Generated README\n\n")
 
-")
-
-        f.write("## 🚀 CLI Commands
-")
+        f.write("## 🚀 CLI Commands\n")
         for cmd in CLI_COMMANDS:
-            f.write(f"- `{cmd}`
-")
+            f.write(f"- `{cmd}`\n")
 
-        f.write("
-## 📈 Prometheus Metrics
-")
+        f.write("\n## 📈 Prometheus Metrics\n")
         for metric in PROMETHEUS_METRICS:
-            f.write(f"- `{metric}`
-")
+            f.write(f"- `{metric}`\n")
 
-        f.write("
-## 📁 Project File Structure (Top-Level Only)
-")
+        f.write("\n## 📁 Project File Structure (Top-Level Only)\n")
         for item in sorted(os.listdir(".")):
             if os.path.isdir(item):
-                f.write(f"- `/`{item}/
-")
+                f.write(f"- `/`{item}/\n")
             elif os.path.isfile(item):
-                f.write(f"- `{item}`
-")
+                f.write(f"- `{item}`\n")
 
     print(f"[INFO] README generated at: {README_OUTPUT}")
 
