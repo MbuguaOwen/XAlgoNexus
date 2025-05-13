@@ -70,8 +70,10 @@ jobs:
     else:
         print("⚠️ Metrics endpoint responded but expected metric was not found.")
 except Exception as e:
-    print(f"⚠️ Prometheus metrics check skipped: {e}")
-       EOF
+    print("⚠️ Prometheus metrics check skipped: {}".format(e))
+         EOF
+
+
 
       - name: 🗂 Archive logs as PDF
         shell: bash
