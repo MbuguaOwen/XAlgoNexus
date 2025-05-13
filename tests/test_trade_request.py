@@ -14,7 +14,9 @@ def test_valid_trade_execution():
         "features": {
             "spread": -0.0021,
             "z_score": -2.9,
-            "volume": 0.05
+            "volume": 0.05,
+            "imbalance": 0.4,
+            "volatility": 0.0001
         }
     }
 
@@ -27,7 +29,6 @@ def test_valid_trade_execution():
 
 def test_missing_features():
     payload = {}
-
     response = client.post("/trade", json=payload)
     assert response.status_code == 422
 
@@ -44,7 +45,9 @@ def test_unsupported_decision(monkeypatch):
         "features": {
             "spread": 0.003,
             "z_score": 2.5,
-            "volume": 0.01
+            "volume": 0.01,
+            "imbalance": 0.5,
+            "volatility": 0.0002
         }
     }
 
@@ -58,7 +61,9 @@ def test_zero_volume():
         "features": {
             "spread": -0.003,
             "z_score": -3.0,
-            "volume": 0.0
+            "volume": 0.0,
+            "imbalance": 0.6,
+            "volatility": 0.0003
         }
     }
 
