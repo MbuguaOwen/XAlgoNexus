@@ -27,7 +27,12 @@ def tail_logs():
 
 # CLI command: Run all unit tests
 def run_tests():
-    subprocess.run(["pytest", "tests/"], check=True)
+    if os.path.isdir("tests"):
+        subprocess.run(["pytest", "tests/"], check=True)
+    else:
+        print("⚠️  No tests/ directory found. Skipping tests.")
+
+    
 
 # Entry point
 def main():
