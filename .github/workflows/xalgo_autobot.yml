@@ -57,21 +57,12 @@ jobs:
           git commit -m "🤖 Auto-trained triangular_rf_model.pkl [CI]" || echo "No changes to commit"
           git push || echo "No changes to push"
 
-      - name: 📊 Validate Prometheus Metrics (if live_controller is running)
+      - name: 📊 Validate Prometheus Metrics (safe mode)
         shell: bash
         run: |
           source .venv/bin/activate
-          cat <<EOF | python3
-          import requests
-        try:
-          r = requests.get("http://localhost:9100/metrics", timeout=3)
-    if "xalgo_latest_spread" in r.text:
-        print("✅ Prometheus metrics found.")
-    else:
-        print("⚠️ Metrics endpoint responded but expected metric was not found.")
-except Exception as e:
-    print("⚠️ Prometheus metrics check skipped: {}".format(e))
-         EOF
+          echo "aW1wb3J0IHJlcXVlc3RzCgp0cnk6CiAgICByID0gcmVxdWVzdHMuZ2V0KCJodHRwOi8vbG9jYWxob3N0OjkxMDAvbWV0cmljcyIsIHRpbWVvdXQ9MykKICAgIGlmICJ4YWxnb19sYXRlc3Rfc3ByZWFkIiBpbiByLnRleHQ6CiAgICAgICAgcHJpbnQoIsKpIFByb21ldGhldXMgbWV0cmljcyBmb3VuZC4iKQogICAgZWxzZToKICAgICAgICBwcmludCgi4oCmIE1ldHJpY3MgZW5kcG9pbnQgcmVzcG9uZGVkIGJ1dCBlc3BlY3RlZCBtZXRyaWMgd2FzIG5vdCBmb3VuZC4iKQpleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICBwcmludCgi4oCmIFByb21ldGhldXMgbWV0cmljcyBjaGVjayBza2lwcGVkOiB7fSIuZm9ybWF0KGUpKQo=" | base64 -d | python3
+
 
 
 
