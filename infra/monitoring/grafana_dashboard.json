@@ -1,0 +1,208 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "xalgo-dashboard",
+    "title": "XAlgo Trading System Dashboard",
+    "timezone": "UTC",
+    "refresh": "5s",
+    "schemaVersion": 27,
+    "version": 4,
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Spread Monitor",
+        "targets": [
+          {
+            "expr": "xalgo_latest_spread",
+            "legendFormat": "Spread"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "graph",
+        "title": "Volatility Monitor",
+        "targets": [
+          {
+            "expr": "xalgo_latest_volatility",
+            "legendFormat": "Volatility"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "graph",
+        "title": "Orderbook Imbalance Monitor",
+        "targets": [
+          {
+            "expr": "xalgo_latest_imbalance",
+            "legendFormat": "Imbalance"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "graph",
+        "title": "Daily P&L Tracker",
+        "targets": [
+          {
+            "expr": "xalgo_daily_pnl",
+            "legendFormat": "PnL"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "gauge",
+        "title": "ML Filter Accuracy (%)",
+        "targets": [
+          {
+            "expr": "100 * mlfilter_correct_predictions / mlfilter_total_predictions",
+            "legendFormat": "Accuracy %"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "green",
+                  "value": 90
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "gauge",
+        "title": "Confidence Score",
+        "targets": [
+          {
+            "expr": "xalgo_confidence_score",
+            "legendFormat": "Confidence"
+          }
+        ],
+        "gridPos": {
+          "h": 5,
+          "w": 6,
+          "x": 12,
+          "y": 24
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "gauge",
+        "title": "Cointegration Score",
+        "targets": [
+          {
+            "expr": "xalgo_cointegration_score",
+            "legendFormat": "Cointegration"
+          }
+        ],
+        "gridPos": {
+          "h": 5,
+          "w": 6,
+          "x": 18,
+          "y": 24
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "gauge",
+        "title": "Anomaly Score",
+        "targets": [
+          {
+            "expr": "xalgo_anomaly_score",
+            "legendFormat": "Anomaly"
+          }
+        ],
+        "gridPos": {
+          "h": 5,
+          "w": 6,
+          "x": 0,
+          "y": 32
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "gauge",
+        "title": "Composite Score",
+        "targets": [
+          {
+            "expr": "xalgo_composite_score",
+            "legendFormat": "Composite"
+          }
+        ],
+        "gridPos": {
+          "h": 5,
+          "w": 6,
+          "x": 6,
+          "y": 32
+        },
+        "datasource": "Prometheus"
+      },
+      {
+        "type": "graph",
+        "title": "Virtual Account Balance ($)",
+        "targets": [
+          {
+            "expr": "xalgo_virtual_balance",
+            "legendFormat": "Balance"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 38
+        },
+        "datasource": "Prometheus"
+      }
+    ]
+  },
+  "overwrite": true
+}

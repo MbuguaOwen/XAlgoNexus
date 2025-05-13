@@ -18,32 +18,33 @@ class SignalGenerator:
         self.zscore_threshold = zscore_threshold
         self.confidence_threshold = 0.90  # stricter confidence for trading signal
 
-    def generate_signal(self, features):
+    def generate_signal(self, features: dict):
         if not features:
             logger.warning("[SIGNAL] Feature vector missing.")
-            return None
+            return {"decision": "HOLD", "side": None, "reason": "missing features"}
 
+        # Extract required prices
         btc_price = features.get("btc_price")
         eth_price = features.get("eth_price")
         ethbtc_price = features.get("eth_btc")
 
         if btc_price is None or eth_price is None or ethbtc_price is None:
             logger.warning("[SIGNAL] Missing price data in feature vector.")
-            return None
+            return {"decision": "HOLD", "side": None, "reason": "missing price data"}
 
-        # 1️⃣ Compute triangular arbitrage metrics
+        # 1️⃣ Triangular arbitrage metrics
         implied_ethbtc = eth_price / btc_price
         spread = ethbtc_price - implied_ethbtc
         features["implied_ethbtc"] = implied_ethbtc
         features["spread"] = spread
 
-        # 2️⃣ Update Kalman and compute z-score
+        # 2️⃣ Kalman filter z-score
         self.kalman.update(btc_price, eth_price)
         zscore = self.kalman.get_zscore()
         kalman_params = self.kalman.get_params()
-        features["z_score"] = zscore  # for ML
+        features["z_score"] = zscore
 
-        # 3️⃣ ML prediction with confidence
+        # 3️⃣ ML prediction + confidence
         ml_result = self.ml_filter.predict_with_confidence({
             "btc_usd": btc_price,
             "eth_usd": eth_price,
@@ -52,8 +53,9 @@ class SignalGenerator:
             "spread": spread,
             "z_score": zscore
         })
-        signal = ml_result["signal"]
-        confidence = ml_result["confidence"]
+
+        signal = ml_result.get("signal")
+        confidence = ml_result.get("confidence")
 
         if signal == 0 or confidence < self.confidence_threshold:
             logger.info(
@@ -98,6 +100,6 @@ class SignalGenerator:
             "btc_price": btc_price,
             "eth_price": eth_price,
             "ethbtc_price": ethbtc_price,
-            "volatility": features.get("volatility"),
-            "imbalance": features.get("imbalance")
+            "volatility": features.get("volatility", 0.0),
+            "imbalance": features.get("imbalance", 0.0)
         }
