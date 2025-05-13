@@ -65,13 +65,6 @@ jobs:
 
 
 
-
-      - name: 🗂 Archive logs as PDF
-        shell: bash
-        run: |
-          pip install fpdf
-          python tools/archive_logs.py
-
       - name: 📚 Generate README_AUTO.md
         shell: bash
         run: |
