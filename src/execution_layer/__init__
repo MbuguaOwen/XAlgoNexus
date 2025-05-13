@@ -1,0 +1,9 @@
+class BinanceExecutor:
+    def __init__(self, api_key=None, api_secret=None, mode=None):
+        from dotenv import load_dotenv
+        load_dotenv()
+
+        self.api_key = api_key or os.getenv("EIjhPyNPT4rQ29GBTu4J14zDx099JHNKNhUHN7ZDWWm59SmFNMnxFgI681QbqTiV")
+        self.api_secret = api_secret or os.getenv("BzyOpWnR7evfZc8hVXQcI9NiW0lWAUjqq0hJGlMGeiqmFgtNdjrPBd8WtZFsrda9")
+        self.mode = mode or os.getenv("BINANCE_MODE", "paper")
+        self.client = self._connect()
