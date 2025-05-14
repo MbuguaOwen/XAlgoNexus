@@ -1,0 +1,55 @@
+name: Auto Monitoring Config Sync
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - prometheus.yml
+      - alert.rules.yml
+      - alertmanager.yml
+      - grafana/**
+
+jobs:
+  sync-monitoring-stack:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "XAlgo Sync Bot"
+          git config user.email "xalgo-bot@example.com"
+
+      - name: Stage monitoring files
+        run: |
+          git add prometheus.yml alert.rules.yml alertmanager.yml || true
+          git add grafana/provisioning/datasources/* grafana/provisioning/dashboards/* || true
+
+      - name: Commit if changes exist
+        id: commit
+        run: |
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            git commit -m "🔧 Sync Prometheus & Grafana monitoring stack [bot]"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push changes
+        if: steps.commit.outputs.skip != 'true'
+        run: |
+          git push
+
+      - name: Tag release
+        if: steps.commit.outputs.skip != 'true'
+        run: |
+          VERSION_TAG="monitoring-v1"
+          if git tag | grep -q "^$VERSION_TAG$"; then
+            VERSION_TAG="${VERSION_TAG}-$(date +%s)"
+          fi
+          git tag "$VERSION_TAG"
+          git push origin "$VERSION_TAG"
