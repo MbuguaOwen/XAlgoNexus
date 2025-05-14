@@ -8,6 +8,9 @@ on:
       - alert.rules.yml
       - alertmanager.yml
       - grafana/**
+      - src/tools/train_ml_filter_combined.py
+      - ml_model/**
+      - .github/workflows/auto-monitoring-sync.yml
 
 jobs:
   sync-monitoring-stack:
@@ -23,10 +26,12 @@ jobs:
           git config user.name "XAlgo Sync Bot"
           git config user.email "xalgo-bot@example.com"
 
-      - name: Stage monitoring files
+      - name: Stage monitoring and ML files
         run: |
           git add prometheus.yml alert.rules.yml alertmanager.yml || true
           git add grafana/provisioning/datasources/* grafana/provisioning/dashboards/* || true
+          git add src/tools/train_ml_filter_combined.py || true
+          git add ml_model/* || true
 
       - name: Commit if changes exist
         id: commit
@@ -35,14 +40,20 @@ jobs:
             echo "No changes to commit."
             echo "skip=true" >> $GITHUB_OUTPUT
           else
-            git commit -m "🔧 Sync Prometheus & Grafana monitoring stack [bot]"
+            git commit -m "🔧 Sync monitoring config and ML model [bot]"
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Push changes
         if: steps.commit.outputs.skip != 'true'
+        run: git push
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+      - name: Run ML Filter Training
         run: |
-          git push
+          python src/tools/train_ml_filter_combined.py || echo "⚠️ ML training failed but workflow continued."
 
       - name: Tag release
         if: steps.commit.outputs.skip != 'true'
