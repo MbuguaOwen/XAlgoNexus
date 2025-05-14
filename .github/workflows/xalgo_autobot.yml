@@ -36,7 +36,7 @@ jobs:
         run: |
           source .venv/bin/activate
           if [ -f xalgo_cli_runner.py ]; then
-            python xalgo_cli_runner.py test
+            PYTHONPATH=src python xalgo_cli_runner.py test
           else
             echo "❌ File not found: xalgo_cli_runner.py"
             exit 1
@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           source .venv/bin/activate
-          python src/tools/train_ml_filter_combined.py
+          PYTHONPATH=src python src/tools/train_ml_filter_combined.py
 
       - name: 🤖 Commit updated ML model if changed
         shell: bash
@@ -62,8 +62,6 @@ jobs:
         run: |
           source .venv/bin/activate
           echo "aW1wb3J0IHJlcXVlc3RzCgp0cnk6CiAgICByID0gcmVxdWVzdHMuZ2V0KCJodHRwOi8vbG9jYWxob3N0OjkxMDAvbWV0cmljcyIsIHRpbWVvdXQ9MykKICAgIGlmICJ4YWxnb19sYXRlc3Rfc3ByZWFkIiBpbiByLnRleHQ6CiAgICAgICAgcHJpbnQoIsKpIFByb21ldGhldXMgbWV0cmljcyBmb3VuZC4iKQogICAgZWxzZToKICAgICAgICBwcmludCgi4oCmIE1ldHJpY3MgZW5kcG9pbnQgcmVzcG9uZGVkIGJ1dCBlc3BlY3RlZCBtZXRyaWMgd2FzIG5vdCBmb3VuZC4iKQpleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICBwcmludCgi4oCmIFByb21ldGhldXMgbWV0cmljcyBjaGVjayBza2lwcGVkOiB7fSIuZm9ybWF0KGUpKQo=" | base64 -d | python3
-
-
 
       - name: 📚 Generate README_AUTO.md
         shell: bash
