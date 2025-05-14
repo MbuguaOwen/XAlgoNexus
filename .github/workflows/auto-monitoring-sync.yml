@@ -26,7 +26,6 @@ jobs:
           git config user.name "XAlgo Sync Bot"
           git config user.email "xalgo-bot@example.com"
 
-
       - name: Stage monitoring and ML files
         run: |
           git add prometheus.yml alert.rules.yml alertmanager.yml || true
@@ -49,19 +48,18 @@ jobs:
         if: steps.commit.outputs.skip != 'true'
         run: git push
 
-      - name: Set PYTHONPATH to root
-        run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-
+      - name: Set PYTHONPATH to src
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
 
       - name: Set up Python and install dependencies
         run: |
-             python -m pip install --upgrade pip
-             pip install -r requirements.txt
-     
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run ML Filter Training
+        working-directory: ./src
         run: |
-          python src/tools/train_ml_filter_combined.py || echo "⚠️ ML training failed but workflow continued."
+          python -m tools.train_ml_filter_combined || echo "⚠️ ML training failed but workflow continued."
 
       - name: Tag release
         if: steps.commit.outputs.skip != 'true'
