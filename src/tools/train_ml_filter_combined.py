@@ -30,6 +30,16 @@ DATA_PATH = "ml_model/data/features_triangular_full.csv"
 MODEL_OUTPUT_PATH = "ml_model/triangular_rf_model.pkl"
 
 # -------------------------------
+# Labeling Logic
+# -------------------------------
+def apply_basic_labels(df, threshold=0.0005):
+    df["label"] = 0
+    df.loc[df["spread"] > threshold, "label"] = -1  # Sell
+    df.loc[df["spread"] < -threshold, "label"] = 1   # Buy
+    print("✅ Labels applied based on spread threshold.")
+    return df
+
+# -------------------------------
 # Load Data
 # -------------------------------
 def load_data(path=DATA_PATH):
@@ -43,8 +53,11 @@ def load_data(path=DATA_PATH):
         return None
 
     if "label" not in df.columns:
-        print("⚠️ 'label' column missing in training data.")
-        return None
+        print("⚠️ 'label' column missing. Generating basic labels from spread...")
+        if "spread" not in df.columns:
+            print("❌ Cannot generate labels: 'spread' column missing.")
+            return None
+        df = apply_basic_labels(df)
 
     return df
 
