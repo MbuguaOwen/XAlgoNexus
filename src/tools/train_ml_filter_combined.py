@@ -9,6 +9,19 @@ import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import classification_report, accuracy_score
+from utils.download_if_missing import download_file_from_google_drive
+
+# -------------------------------
+# Download config
+# -------------------------------
+btc_file_id = "1SM_Lpngr8FulTj9zF0A655B-IuiGgf3j"
+eth_file_id = "1egnWMTphdxtRaa9-BvlXUIO4dQutMPUG"
+btc_target = "ml_model/BTCUSD.csv"
+eth_target = "ml_model/ETHUSD.csv"
+
+# --- Auto-download large source files if missing ---
+download_file_from_google_drive(btc_file_id, btc_target)
+download_file_from_google_drive(eth_file_id, eth_target)
 
 # -------------------------------
 # Config
