@@ -9,7 +9,7 @@ import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import classification_report, accuracy_score
-from utils.download_if_missing import download_file_from_google_drive
+from ..utils.download_if_missing import download_file_from_google_drive
 
 # -------------------------------
 # Download config
