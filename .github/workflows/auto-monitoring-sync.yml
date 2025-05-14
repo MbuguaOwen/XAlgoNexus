@@ -48,8 +48,10 @@ jobs:
         if: steps.commit.outputs.skip != 'true'
         run: git push
 
-      - name: Set PYTHONPATH
+      - name: Set PYTHONPATH to include ./src
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+       
 
       - name: Run ML Filter Training
         run: |
