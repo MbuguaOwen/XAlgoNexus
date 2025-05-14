@@ -48,8 +48,7 @@ jobs:
         if: steps.commit.outputs.skip != 'true'
         run: git push
 
-      - name: Set PYTHONPATH to src
-        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+    
 
       - name: Set up Python and install dependencies
         run: |
@@ -58,7 +57,7 @@ jobs:
 
       - name: Run ML Filter Training
         run: |
-          python src/tools/train_ml_filter_combined.py || echo "⚠️ ML training failed but workflow continued."
+          PYTHONPATH=$GITHUB_WORKSPACE/src python src/tools/train_ml_filter_combined.py || echo "⚠️ ML training failed but workflow continued."
 
       - name: Tag release
         if: steps.commit.outputs.skip != 'true'
