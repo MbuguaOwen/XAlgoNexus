@@ -57,7 +57,7 @@ jobs:
 
       - name: Run ML Filter Training
         run: |
-          PYTHONPATH=$GITHUB_WORKSPACE/src python src/tools/train_ml_filter_combined.py || echo "⚠️ ML training failed but workflow continued."
+          PYTHONPATH=$GITHUB_WORKSPACE python -m src.tools.train_ml_filter_combined || echo "⚠️ ML training failed but workflow continued."
 
       - name: Tag release
         if: steps.commit.outputs.skip != 'true'
