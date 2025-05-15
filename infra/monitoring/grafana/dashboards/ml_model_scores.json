@@ -1,0 +1,25 @@
+{
+  "title": "ML Model Scores",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Confidence Score",
+      "targets": [{"expr": "xalgo_latest_confidence_score"}],
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Anomaly Score",
+      "targets": [{"expr": "xalgo_anomaly_score"}],
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Cointegration Stability",
+      "targets": [{"expr": "xalgo_cointegration_stability_score"}],
+      "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}
+    }
+  ],
+  "schemaVersion": 36,
+  "version": 1
+}

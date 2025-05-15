@@ -2,11 +2,13 @@
 
 import os
 import sys
+import time
 import asyncio
 import logging
+import subprocess
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, start_http_server
 from dotenv import load_dotenv
 
@@ -39,7 +41,10 @@ app.include_router(execution_controller.router)
 # ----------------------
 # Internal Imports
 # ----------------------
-from metrics.metrics import spread_gauge, volatility_gauge, imbalance_gauge, pnl_gauge
+from metrics.metrics import (
+    spread_gauge, volatility_gauge, imbalance_gauge, pnl_gauge,
+    heartbeat_gauge
+)
 from data_pipeline.data_normalizer import DataNormalizer
 from feature_engineering.feature_engineer import FeatureEngineer
 from strategy_core.signal_generator import SignalGenerator
@@ -85,6 +90,17 @@ db_config = {
     'port': int(os.getenv("POSTGRES_PORT", 5432))
 }
 storage_adapter = TimescaleDBAdapter(db_config)
+
+# ----------------------
+# Heartbeat Loop
+# ----------------------
+def emit_heartbeat():
+    heartbeat_gauge.set(time.time())
+
+async def heartbeat_loop():
+    while True:
+        emit_heartbeat()
+        await asyncio.sleep(1)
 
 # ----------------------
 # Core Event Processing Logic
@@ -136,6 +152,15 @@ async def process_event(event):
                         pnl_tracker.mark_to_market({order['pair']: order['filled_price']})
                         risk_manager.update_pnl(pnl_tracker.get_total_pnl())
                         pnl_gauge.set(risk_manager.daily_pnl)
+
+                        # 🔁 Runtime Drift Detection + Retraining Trigger
+                        model_precision = prediction_correct / max(prediction_total, 1)
+                        model_pnl_error = abs(pnl_tracker.get_total_pnl() / max(prediction_total, 1))
+
+                        if model_precision < 0.55 or model_pnl_error > 0.002:
+                            logger.warning(f"[RETRAINING] Model drift detected — precision={model_precision:.2f}, pnl_error={model_pnl_error:.6f}")
+                            subprocess.run(["python", "src/tools/train_ml_filter_combined.py"])
+
     except Exception as e:
         logger.error(f"[LIVE_CONTROLLER] Event processing failed: {e}")
 
@@ -145,8 +170,13 @@ async def process_event(event):
 async def start_pipeline():
     logger.info("[XALGO] Bootstrapping components...")
     await storage_adapter.init_pool()
+
+    # Run ingestor and heartbeat concurrently
     ingestor = BinanceIngestor(process_event_func=process_event)
-    await ingestor.connect_and_listen()
+    await asyncio.gather(
+        ingestor.connect_and_listen(),
+        heartbeat_loop()
+    )
 
 # ----------------------
 # FastAPI Endpoints
@@ -158,6 +188,13 @@ def metrics():
 @app.get("/pnl")
 def get_pnl():
     return pnl_tracker.summary()
+
+@app.get("/drift")
+def model_drift_status():
+    return JSONResponse({
+        "precision": prediction_correct / max(prediction_total, 1),
+        "pnl_error": abs(pnl_tracker.get_total_pnl() / max(prediction_total, 1))
+    })
 
 @app.on_event("startup")
 async def list_routes():

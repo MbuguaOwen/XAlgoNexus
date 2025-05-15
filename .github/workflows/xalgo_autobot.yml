@@ -5,6 +5,8 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly retraining every Sunday
 
 jobs:
   xalgo-ci:
@@ -48,13 +50,29 @@ jobs:
           source .venv/bin/activate
           PYTHONPATH=src python src/tools/train_ml_filter_combined.py
 
+      - name: 🔁 Auto-Retrain if Drift Detected
+        shell: bash
+        run: |
+          echo "📡 Checking Prometheus drift metrics..."
+          PREC=$(curl -s http://localhost:9100/metrics | grep 'xalgo_model_precision' | awk '{print $2}')
+          DELTA=$(curl -s http://localhost:9100/metrics | grep 'xalgo_model_pnl_error' | awk '{print $2}')
+          echo "🧠 Model precision: $PREC | PnL error: $DELTA"
+          THRESHOLD_PNL=0.002
+          THRESHOLD_PREC=0.55
+          if (( $(echo "$PREC < $THRESHOLD_PREC" | bc -l) )) || (( $(echo "$DELTA > $THRESHOLD_PNL" | bc -l) )); then
+            echo "🚨 Drift detected. Triggering retraining..."
+            PYTHONPATH=src python src/tools/train_ml_filter_combined.py
+          else
+            echo "✅ Model within healthy bounds. No retraining required."
+          fi
+
       - name: 🤖 Commit updated ML model if changed
         shell: bash
         run: |
           git config --global user.name 'xalgo-autobot'
           git config --global user.email 'autobot@xalgonexus.com'
           git add ml_model/triangular_rf_model.pkl || true
-          git commit -m "🤖 Auto-trained triangular_rf_model.pkl [CI]" || echo "No changes to commit"
+          git commit -m "🤖 Auto-retrained triangular_rf_model.pkl [CI Drift Trigger]" || echo "No changes to commit"
           git push || echo "No changes to push"
 
       - name: 📊 Validate Prometheus Metrics (safe mode)
@@ -70,4 +88,4 @@ jobs:
           python scripts/gen_docs.py
 
       - name: ✅ Done
-        run: echo "🚀 XAlgo CI completed successfully!"
+        run: echo "🚀 XAlgo CI (drift-aware) completed successfully!"
