@@ -1,11 +1,8 @@
-# /src/execution_layer/execution_router.py
-
 import logging
 import random
 import uuid
 from datetime import datetime
 
-# Logger setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("execution_router")
 
@@ -15,11 +12,6 @@ class ExecutionRouter:
     Simulates or routes trade executions based on generated signals.
     """
     def __init__(self, slippage_basis_points: float = 5.0, mode: str = "paper"):
-        """
-        Args:
-            slippage_basis_points (float): Slippage in bps
-            mode (str): "paper" (simulated) or "live" (to be implemented)
-        """
         self.slippage_basis_points = slippage_basis_points
         self.mode = mode
         self.orders_executed = []
@@ -32,7 +24,11 @@ class ExecutionRouter:
 
     def _simulate_order_execution(self, signal: dict, base_price: float, quantity_usd: float) -> dict | None:
         if not signal or signal.get("decision", "HOLD") == "HOLD":
-            logger.debug("[EXECUTION] Skipping HOLD signal.")
+            logger.info("[EXECUTION] HOLD signal — execution skipped.")
+            return None
+
+        if signal.get("composite_score", 0.0) < 0.85:
+            logger.info(f"[EXECUTION] Composite score too low ({signal['composite_score']:.4f}) — execution blocked.")
             return None
 
         slippage_pct = random.uniform(0, self.slippage_basis_points) / 10000
@@ -47,11 +43,12 @@ class ExecutionRouter:
             "filled_price": round(fill_price, 8),
             "slippage": round(slippage_pct, 8),
             "trade_value_usd": round(quantity_usd, 2),
+            "composite_score": round(signal.get("composite_score", 0.0), 4),
             "status": "FILLED"
         }
 
         self.orders_executed.append(order)
-        logger.info(f"[EXECUTION] Order Executed: {order}")
+        logger.info(f"[EXECUTION] Order executed: {order}")
         return order
 
     def get_last_order(self) -> dict | None:

@@ -1,12 +1,10 @@
-# /src/controllers/execution_controller.py
-
 from fastapi import APIRouter, HTTPException, Request
-from signal_core.signal_generator import SignalGenerator
-from execution_layer.binance_executor import BinanceExecutor
+from strategy_core.signal_generator import SignalGenerator
+from execution_layer.execution_router import ExecutionRouter
 
 router = APIRouter()
 signal_gen = SignalGenerator()
-executor = BinanceExecutor()  # ✅ Uses API keys from .env
+executor = ExecutionRouter()  # defaults to paper mode
 
 
 @router.post("/trade")
@@ -17,45 +15,51 @@ async def trade(request: Request):
     if not features:
         raise HTTPException(status_code=422, detail="Missing 'features' in request payload")
 
-    decision = signal_gen.generate_signal(features)
+    signal = signal_gen.generate_signal(features)
 
-    if decision["decision"] in ["BUY ETHBTC", "SELL ETHBTC"]:
-        volume = features.get("volume", 0.01)
+    if signal["decision"] in ["BUY ETHBTC", "SELL ETHBTC"]:
+        base_price = features.get("spread", 1.0)
+        quantity_usd = features.get("volume", 1000.0)
+
         tx = executor.send_order(
-            pair="ETHBTC",
-            side=decision["side"],
-            volume=volume
+            signal=signal,
+            base_price=base_price,
+            quantity_usd=quantity_usd
         )
+
         return {
-            "status": "executed",
+            "status": "executed" if tx else "blocked",
             "order_details": tx,
-            "signal": decision
+            "signal": signal
         }
 
     return {
         "status": "no_trade",
-        "signal": decision
+        "signal": signal
     }
 
 
 @router.post("/execute")
 def generate_and_execute_signal(features: dict):
-    decision = signal_gen.generate_signal(features)
+    signal = signal_gen.generate_signal(features)
 
-    if decision["decision"] in ["BUY ETHBTC", "SELL ETHBTC"]:
-        volume = features.get("volume", 0.01)
+    if signal["decision"] in ["BUY ETHBTC", "SELL ETHBTC"]:
+        base_price = features.get("spread", 1.0)
+        quantity_usd = features.get("volume", 1000.0)
+
         tx = executor.send_order(
-            pair="ETHBTC",
-            side=decision["side"],
-            volume=volume
+            signal=signal,
+            base_price=base_price,
+            quantity_usd=quantity_usd
         )
+
         return {
-            "status": "executed",
+            "status": "executed" if tx else "blocked",
             "order_details": tx,
-            "signal": decision
+            "signal": signal
         }
 
     return {
         "status": "no_trade",
-        "signal": decision
+        "signal": signal
     }
