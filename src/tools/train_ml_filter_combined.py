@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Train and export a combined ML filter model for crypto triangular arbitrage signals.
+Train and export a composite ML model for crypto triangular arbitrage filtering.
+Uses features from confidence, anomaly, and cointegration metrics.
 """
 
 import os
@@ -9,67 +10,66 @@ import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import classification_report, accuracy_score
-from utils.download_if_missing import download_file_from_google_drive
-
-# -------------------------------
-# Download config
-# -------------------------------
-btc_file_id = "1SM_Lpngr8FulTj9zF0A655B-IuiGgf3j"
-eth_file_id = "1egnWMTphdxtRaa9-BvlXUIO4dQutMPUG"
-btc_target = "ml_model/BTCUSD.csv"
-eth_target = "ml_model/ETHUSD.csv"
-
-# --- Auto-download large source files if missing ---
-download_file_from_google_drive(btc_file_id, btc_target)
-download_file_from_google_drive(eth_file_id, eth_target)
 
 # -------------------------------
 # Config
 # -------------------------------
-DATA_PATH = "ml_model/data/features_triangular_full.csv"
+DATA_PATH = "ml_model/data/features_triangular_labeled.csv"
 MODEL_OUTPUT_PATH = "ml_model/triangular_rf_model.pkl"
 
 # -------------------------------
-# Labeling Logic
+# Basic Fallback Labeling
 # -------------------------------
 def apply_basic_labels(df, threshold=0.0005):
     df["label"] = 0
-    df.loc[df["spread"] > threshold, "label"] = -1  # Sell
-    df.loc[df["spread"] < -threshold, "label"] = 1   # Buy
-    print("✅ Labels applied based on spread threshold.")
+    df.loc[df["spread"] > threshold, "label"] = -1
+    df.loc[df["spread"] < -threshold, "label"] = 1
+    print("⚠️ Fallback labels applied using spread threshold.")
     return df
 
 # -------------------------------
-# Load Data
+# Load Labeled Dataset
 # -------------------------------
 def load_data(path=DATA_PATH):
     if not os.path.exists(path):
-        print(f"⚠️ Training data not found: {path}. Skipping model training.")
+        print(f"❌ File missing: {path}")
         return None
 
     df = pd.read_csv(path)
     if df.empty:
-        print("⚠️ Training data is empty.")
+        print("❌ Dataset is empty.")
         return None
 
     if "label" not in df.columns:
-        print("⚠️ 'label' column missing. Generating basic labels from spread...")
+        print("⚠️ No label found. Trying fallback...")
         if "spread" not in df.columns:
-            print("❌ Cannot generate labels: 'spread' column missing.")
+            print("❌ Missing 'spread' column. Cannot label.")
             return None
         df = apply_basic_labels(df)
 
     return df
 
 # -------------------------------
-# Train Model
+# Train Model with Composite Features
 # -------------------------------
 def train_model(df):
-    X = df.drop(columns=["label", "timestamp"], errors='ignore')
+    # Select inference-safe feature columns
+    feature_cols = [
+        "btc_usd", "eth_usd", "eth_btc",
+        "implied_ethbtc", "spread", "z_score",
+        "confidence_score", "cointegration_stability_score", "anomaly_score"
+    ]
+
+    if not all(col in df.columns for col in feature_cols):
+        missing = [col for col in feature_cols if col not in df.columns]
+        print(f"❌ Missing required features: {missing}")
+        return None
+
+    X = df[feature_cols]
     y = df["label"]
 
-    tscv = TimeSeriesSplit(n_splits=5)
     model = RandomForestClassifier(n_estimators=100, max_depth=7, random_state=42)
+    tscv = TimeSeriesSplit(n_splits=5)
 
     for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
@@ -77,8 +77,9 @@ def train_model(df):
 
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
+
         acc = accuracy_score(y_test, y_pred)
-        print(f"[Fold {fold+1}] Accuracy: {acc:.4f}")
+        print(f"[Fold {fold + 1}] Accuracy: {acc:.4f}")
         print(classification_report(y_test, y_pred))
 
     return model
@@ -92,12 +93,13 @@ def save_model(model, path=MODEL_OUTPUT_PATH):
     print(f"✅ Model saved to: {path}")
 
 # -------------------------------
-# Entry Point
+# Main Entrypoint
 # -------------------------------
 if __name__ == "__main__":
     df = load_data()
     if df is not None:
         model = train_model(df)
-        save_model(model)
+        if model:
+            save_model(model)
     else:
-        print("⚠️ No training performed.")
+        print("⚠️ Training aborted — data invalid or missing.")
