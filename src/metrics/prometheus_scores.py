@@ -6,16 +6,16 @@ from prometheus_client import Gauge
 # Prometheus Gauges
 # ------------------------
 confidence_score_gauge = Gauge(
-    "xalgo_confidence_score", "Model confidence score for trade signal"
+    "mlfilter_confidence_score", "Confidence score from ML model"
 )
 cointegration_score_gauge = Gauge(
-    "xalgo_cointegration_score", "Cointegration stability score for synthetic spread"
+    "mlfilter_cointegration_score", "Triangle cointegration stability"
 )
 anomaly_score_gauge = Gauge(
-    "xalgo_anomaly_score", "Anomaly detection score for market regime shifts"
+    "mlfilter_anomaly_score", "Anomaly score from Isolation Forest"
 )
 composite_score_gauge = Gauge(
-    "xalgo_composite_score", "Final combined score used for trade filtering"
+    "mlfilter_composite_score", "Final composite signal score"
 )
 
 # ------------------------
@@ -23,14 +23,15 @@ composite_score_gauge = Gauge(
 # ------------------------
 def compute_composite_score(confidence: float, cointegration: float, anomaly: float) -> float:
     """
-    Compute a composite score by averaging the three input metrics.
-    Update this logic to apply different weights if needed.
+    Compute a composite score using weighted average of input metrics.
+    Default weights: confidence (40%), cointegration (40%), inverse anomaly (20%).
+    You may update weights based on performance benchmarks.
     """
-    return (confidence + cointegration + anomaly) / 3.0
+    return 0.4 * confidence + 0.4 * cointegration + 0.2 * (1.0 - anomaly)
 
 def push_scores_to_prometheus(confidence: float, cointegration: float, anomaly: float) -> float:
     """
-    Push individual and composite scores to Prometheus gauges.
+    Push individual and composite scores to Prometheus.
     Returns the composite score.
     """
     composite = compute_composite_score(confidence, cointegration, anomaly)
