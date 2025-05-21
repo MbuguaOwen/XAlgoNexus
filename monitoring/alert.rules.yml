@@ -1,0 +1,29 @@
+groups:
+  - name: xalgo_alert_rules
+    rules:
+      - alert: NoTradeActivity
+        expr: increase(xalgo_successful_cycles[10m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No successful trades in last 10 minutes"
+          description: "The system hasn't completed any successful arbitrage cycles in over 10 minutes. Check market connectivity or model filters."
+
+      - alert: HighModelDrift
+        expr: xalgo_model_pnl_error > 0.003
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High model prediction error"
+          description: "Live model predictions are deviating significantly from real PnL. Consider retraining or switching to fallback logic."
+
+      - alert: ExecutionHeartbeatMissing
+        expr: time() - xalgo_heartbeat > 120
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Execution loop is unresponsive"
+          description: "No heartbeat received from the execution loop for over 2 minutes. Restart or investigate."

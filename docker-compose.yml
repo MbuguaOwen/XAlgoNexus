@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+
+  timescaledb:  # ✅ Renamed for standard usage
+    image: timescale/timescaledb:latest-pg14
+    container_name: timescaledb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 11230428018
+      POSTGRES_DB: xalgo_trading_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./timescaledb_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  timescaledb_exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: timescaledb_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:11230428018@timescaledb:5432/xalgo_trading_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - timescaledb
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana_dashboard.json:/etc/grafana/provisioning/dashboards/grafana_dashboard.json
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  live_controller:
+    build:
+      context: ../
+      dockerfile: ./infra/docker/Dockerfile
+    container_name: live_controller
+    ports:
+      - "9100:9100"
+    environment:
+      DB_HOST: timescaledb  # ✅ Aligned with renamed service
+      DB_USER: postgres
+      DB_PASSWORD: 11230428018
+      DB_NAME: xalgo_trading_db
+    volumes:
+      - ../wheels:/wheels:ro
+    depends_on:
+      - timescaledb
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  signal_engine:
+    build:
+      context: ../
+      dockerfile: ./infra/docker/Dockerfile.signal_engine
+    container_name: signal_engine
+    ports:
+      - "9101:9101"
+    environment:
+      DB_HOST: timescaledb  # ✅ Aligned with renamed service
+      DB_USER: postgres
+      DB_PASSWORD: 11230428018
+      DB_NAME: xalgo_trading_db
+    depends_on:
+      - timescaledb
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+volumes:
+  timescale_data:
+
+networks:
+  monitoring:
